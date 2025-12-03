@@ -134,6 +134,8 @@ function renderVehicles(list) {
     els.grid.innerHTML = list.map(v => {
         const title = `${v.make} ${v.model}`.trim();
         const badge = `<span class="badge">${v.status || '—'}</span>`;
+        const isUnavailable = (v.status || '').toLowerCase() !== 'available';
+
         return `
             <article class="card">
                 <div class="media"><span>${title}</span></div>
@@ -145,9 +147,9 @@ function renderVehicles(list) {
                         ${badge}
                     </div>
                     <div class="actions">
-                        <button class="btn primary rent-btn" 
+                    <button class="btn primary rent-btn ${isUnavailable ? 'rent-disabled' : ''}"
                                 data-id="${v.vehicle_id}"
-                                ${v.status !== "available" ? "disabled" : ""}>
+                                data-status="${v.status || ''}">
                             Rent Now
                         </button>
                     </div>
@@ -256,6 +258,18 @@ if (els.signOutBtn) {
 document.addEventListener('click', async (event) => {
     const rentBtn = event.target.closest('.rent-btn');
     if (!rentBtn) return;
+
+    const status = (rentBtn.dataset.status || '').toLowerCase();
+    if (status && status !== 'available') {
+        if (status === 'rented') {
+            alert('This vehicle is already rented for the selected dates.');
+        } else if (status === 'maintenance') {
+            alert('This vehicle is currently in maintenance and cannot be rented.');
+        } else {
+            alert('This vehicle is not available for rent at the moment.');
+        }
+        return;
+    }
 
     const vehicleId = Number(rentBtn.dataset.id);
     const user = getCurrentUser();

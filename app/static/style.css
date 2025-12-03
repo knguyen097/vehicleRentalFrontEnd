@@ -499,3 +499,12 @@ select
 {
     margin-top: 3px;
 }
+
+.btn.rent-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn.rent-disabled:hover {
+    border-color: var(--border-2); /* keep it from glowing on hover */
+}

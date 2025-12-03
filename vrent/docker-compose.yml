@@ -1,0 +1,69 @@
+services:
+  fastapi:
+    image: tiangolo/uvicorn-gunicorn-fastapi:python3.11
+    container_name: fastapi
+    security_opt:
+      - label:disable
+    volumes:
+      - ./app:/app:Z
+    ports:
+      - "8000:80"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: "mysql+pymysql://user:password@db/dbname"
+    command: sh -c "pip install -r /app/requirements.txt && /start.sh"
+    restart: unless-stopped
+    healthcheck:
+      # Avoid curl; rely on Python (always present in this image)
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1/health', timeout=2)\""]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 90s
+
+  db:
+    image: mariadb:lts
+    container_name: mariadb
+    security_opt:
+      - label:disable
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: dbname
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    command: --innodb-use-native-aio=0
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/ddl.sql:/docker-entrypoint-initdb.d/01_ddl.sql:Z
+      - ./db/dml.sql:/docker-entrypoint-initdb.d/02_dml.sql:Z
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    container_name: phpmyadmin
+    security_opt:
+      - label:disable
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+      # Optional:
+      PMA_USER: user
+      PMA_PASSWORD: password
+    depends_on:
+      - db
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+volumes:
+  db_data:

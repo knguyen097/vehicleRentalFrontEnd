@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Sign In — AutoRentals</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./style.css" />
+  <style>
+    .auth-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .auth-card {
+      background: rgba(14, 23, 42, 0.95);
+      padding: 2rem;
+      border-radius: 1.5rem;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    .auth-card h1 {
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+    }
+    .auth-card label {
+      display: block;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+    }
+    .auth-card input {
+      width: 100%;
+      margin-top: 0.25rem;
+    }
+    .auth-card .error {
+      color: #f87171;
+      margin-top: 0.75rem;
+      min-height: 1.2rem;
+      font-size: 0.85rem;
+    }
+    .auth-card .meta {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="auth-wrapper">
+    <section class="auth-card">
+      <h1>Sign In</h1>
+      <form id="loginForm">
+        <label>
+          Email
+          <input id="email" type="email" required />
+        </label>
+        <label>
+          Password
+          <input id="password" type="password" required />
+        </label>
+        <button type="submit" class="btn primary" style="width:100%; margin-top:1rem;">Sign In</button>
+      </form>
+      <p id="loginError" class="error"></p>
+      <div class="meta">
+        <a href="./index.html">← Back to vehicles</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API = '';
+    const STORAGE_KEY = 'currentUser';
+
+    function saveUser(user) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const errorEl = document.getElementById('loginError');
+        errorEl.textContent = '';
+
+        try {
+        const res = await fetch(`${API}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+            errorEl.textContent = data.message || 'Sign in failed';
+            return;
+        }
+
+        saveUser({
+            user_id: data.user_id,
+            name: data.name,
+            email: data.email
+        });
+
+        // Back to main page
+            window.location.href = './index.html';
+        } catch (err) {
+        errorEl.textContent = 'Network error, please try again.';
+        }
+     });
+    </script>
+</body>
+</html>
